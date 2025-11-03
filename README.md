@@ -1,2 +1,2 @@
-# CNN_HLS
+# CNN_Accelerator_HLS
 To implement a cnn in hardware using verilog by using hls
