@@ -1,0 +1,104 @@
+================================================================
+== Design Size Report
+================================================================
+
+* Total Instructions per Compilation Phase
++---------------+-----------------------------+--------------+----------------------------------------------------------------------------------------+
+| Phase         | Step                        | Instructions | Description                                                                            |
++---------------+-----------------------------+--------------+----------------------------------------------------------------------------------------+
+| Compile/Link  |                             | 122,220 *    | After all functions are compiled and linked into a single design                       |
+|               |                             |              |                                                                                        |
+| Unroll/Inline |                             |              | After user unroll and inline pragmas are applied                                       |
+|               | (1) unroll                  |  12,284      | user unroll pragmas are applied                                                        |
+|               | (2) simplification          |   9,560      | simplification of applied user unroll pragmas                                          |
+|               | (3) inline                  |   8,124      | user inline pragmas are applied                                                        |
+|               | (4) simplification          |   8,004      | simplification of applied user inline pragmas                                          |
+|               |                             |              |                                                                                        |
+| Array/Struct  |                             |              | After user array partition and struct aggregate/disaggregate pragmas are applied       |
+|               | (1) array partition         |   7,956      | user array partition pragmas are applied                                               |
+|               | (2) simplification          |   7,956      | simplification of applied user array partition & struct aggregate/disaggregate pragmas |
+|               | (3) aggregate/disaggregate  |   7,960      | user struct aggregate/disaggregate pragmas are applied                                 |
+|               | (4) array reshape           |   7,964      | apply array reshape pragmas                                                            |
+|               | (5) access patterns         |   8,468      | array access pattern optmizations                                                      |
+|               |                             |              |                                                                                        |
+| Performance   |                             |              | After transformations are applied to meet performance pragma targets                   |
+|               | (1) loop simplification     |   8,460      | loop and instruction simplification                                                    |
+|               | (2) parallelization         |   7,868      | loops are unrolled or pipelined to meet performance targets                            |
+|               | (3) array partition         |  16,389      | arrays are partitioned to meet performance targets                                     |
+|               | (4) simplification          |  10,029      | simplification of design after performance transformations                             |
+|               |                             |              |                                                                                        |
+| HW Transforms |                             |              | After hardware transfomations                                                          |
+|               | (1) lowering                |  10,061      | initial conversion to HW specific instructions                                         |
+|               | (2) optimizations           |  11,159      | high level synthesis optimizations                                                     |
++---------------+-----------------------------+--------------+----------------------------------------------------------------------------------------+
+    * - Exceeded design size warning message threshold
+
+* Instructions per Function for each Compilation Phase
++-----------------------+-------------+-------------------+-----------------+-----------------+------------------+------------------+
+| Function              | Location    | Compile/Link      | Unroll/Inline   | Array/Struct    | Performance      | HW Transforms    |
++-----------------------+-------------+-------------------+-----------------+-----------------+------------------+------------------+
+| + real_top            | top.cpp:383 | 122,220 *         | 8,004           | 8,468           | 10,029           | 11,159           |
+|    split_into_tiles   | top.cpp:344 |    117            |   61            |   69            |    61            |    90            |
+|  + convol             | top.cpp:212 | 122,044 (4 calls) | 7,920 (4 calls) | 8,384 (4 calls) | 9,920 (4 calls)  | 11,016 (4 calls) |
+|   + img_sharp<64, 64> | top.cpp:124 | 37,288 (8 calls)  | 2,232 (8 calls) | 2,400 (8 calls) | 2,936 (8 calls)  | 3,352 (8 calls)  |
+|      multi            | top.cpp:4   |  5,216 (8 calls)  |                 |                 |                  |                  |
+|      col_left_mult    | top.cpp:18  |  3,368 (8 calls)  |                 |                 |                  |                  |
+|      col_right_mult   | top.cpp:30  |  3,368 (8 calls)  |                 |                 |                  |                  |
+|      row_top_mult     | top.cpp:42  |  5,240 (8 calls)  |                 |                 |                  |                  |
+|      row_bottom_mult  | top.cpp:56  |  5,240 (8 calls)  |                 |                 |                  |                  |
+|      cor_mult_tl      | top.cpp:70  |  3,384 (8 calls)  |                 |                 |                  |                  |
+|      cor_mult_tr      | top.cpp:82  |  3,384 (8 calls)  |                 |                 |                  |                  |
+|      cor_mult_bl      | top.cpp:94  |  3,384 (8 calls)  |                 |                 |                  |                  |
+|      cor_mult_br      | top.cpp:106 |  3,384 (8 calls)  |                 |                 |                  |                  |
+|     max               | top.cpp:196 |  2,820 (20 calls) |  500 (20 calls) |  500 (20 calls) |   800 (32 calls) |   704 (32 calls) |
+|   + img_sharp<32, 32> | top.cpp:124 | 18,644 (4 calls)  | 1,116 (4 calls) | 1,200 (4 calls) | 1,208 (4 calls)  | 1,416 (4 calls)  |
+|      multi            | top.cpp:4   |  2,608 (4 calls)  |                 |                 |                  |                  |
+|      col_left_mult    | top.cpp:18  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      col_right_mult   | top.cpp:30  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      row_top_mult     | top.cpp:42  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      row_bottom_mult  | top.cpp:56  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tl      | top.cpp:70  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tr      | top.cpp:82  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_bl      | top.cpp:94  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_br      | top.cpp:106 |  1,692 (4 calls)  |                 |                 |                  |                  |
+|   + img_sharp<16, 16> | top.cpp:124 | 18,644 (4 calls)  | 1,116 (4 calls) | 1,200 (4 calls) | 1,416 (4 calls)  | 1,624 (4 calls)  |
+|      multi            | top.cpp:4   |  2,608 (4 calls)  |                 |                 |                  |                  |
+|      col_left_mult    | top.cpp:18  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      col_right_mult   | top.cpp:30  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      row_top_mult     | top.cpp:42  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      row_bottom_mult  | top.cpp:56  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tl      | top.cpp:70  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tr      | top.cpp:82  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_bl      | top.cpp:94  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_br      | top.cpp:106 |  1,692 (4 calls)  |                 |                 |                  |                  |
+|   + img_sharp<8, 8>   | top.cpp:124 | 18,644 (4 calls)  | 1,116 (4 calls) | 1,200 (4 calls) | 1,464 (4 calls)  | 1,672 (4 calls)  |
+|      multi            | top.cpp:4   |  2,608 (4 calls)  |                 |                 |                  |                  |
+|      col_left_mult    | top.cpp:18  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      col_right_mult   | top.cpp:30  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      row_top_mult     | top.cpp:42  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      row_bottom_mult  | top.cpp:56  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tl      | top.cpp:70  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tr      | top.cpp:82  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_bl      | top.cpp:94  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_br      | top.cpp:106 |  1,692 (4 calls)  |                 |                 |                  |                  |
+|   + img_sharp<4, 4>   | top.cpp:124 | 18,644 (4 calls)  | 1,116 (4 calls) | 1,200 (4 calls) | 1,272 (4 calls)  | 1,480 (4 calls)  |
+|      multi            | top.cpp:4   |  2,608 (4 calls)  |                 |                 |                  |                  |
+|      col_left_mult    | top.cpp:18  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      col_right_mult   | top.cpp:30  |  1,684 (4 calls)  |                 |                 |                  |                  |
+|      row_top_mult     | top.cpp:42  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      row_bottom_mult  | top.cpp:56  |  2,620 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tl      | top.cpp:70  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_tr      | top.cpp:82  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_bl      | top.cpp:94  |  1,692 (4 calls)  |                 |                 |                  |                  |
+|      cor_mult_br      | top.cpp:106 |  1,692 (4 calls)  |                 |                 |                  |                  |
++-----------------------+-------------+-------------------+-----------------+-----------------+------------------+------------------+
+    * - Exceeded design size warning message threshold
+
+* Design Size Message Settings
++---------------------------------------------+--------+------------------------------------------------------------------+
+| Message Setting                             | Value  | Description                                                      |
++---------------------------------------------+--------+------------------------------------------------------------------+
+| config_compile -design_size_maximum_warning | 100000 | Show a warning when total design instructions exceeds this value |
++---------------------------------------------+--------+------------------------------------------------------------------+
+
+
