@@ -114,8 +114,8 @@ void cor_mult_br(iint in[3][3],iint mul[3][3],iint& fi){
     }
     fi=par1+par2;
 }
-#define NR_0 64
-#define NC_0 64
+#define NR_0 128
+#define NC_0 128
 
 static iint demo[NR_0][NC_0][3][3];
 
@@ -209,7 +209,7 @@ void max(iint i,iint j, iint k, iint l, iint& out){
 
 }
 
-void convol(iint A[NR_0][NC_0], iint out[NR_5][NC_5]){
+void convol(iint A[NR_0][NC_0], iint out[NR_4][NC_4]){
 
 
     //#pragma HLS ARRAY_PARTITION variable=A dim=2 type=complete
@@ -317,29 +317,30 @@ void convol(iint A[NR_0][NC_0], iint out[NR_5][NC_5]){
         {  0, -1,  0 }
     };
     //#pragma HLS ARRAY_PARTITION variable=sharpen dim=2 type=complete
-    iint inter_10[NR_4][NC_4];
-    img_sharp<NR_4,NC_4>(inter_9,sharpen,inter_10);
+    //iint inter_10[NR_4][NC_4];
+    img_sharp<NR_4,NC_4>(inter_9,sharpen,out);
     for(int i=0;i<NR_4;i++){
         for(int j=0;j<NC_4;j++){
-            if(inter_10[i][j]<0){
-                inter_10[i][j]=0;
+            if(out[i][j]<0){
+                out[i][j]=0;
             }
         }
     }
+    //out=inter_10;
     //int inter_11[NR_5][NC_5];
-    for(int i=0;i<NR_4;i=i+2){
-        for(int j=0;j<NC_4;j=j+2){
-            max(inter_10[i][j],inter_10[i][j+1],inter_10[i+1][j],inter_10[i+1][j+1],out[i/2][j/2]);
-        }
-    }
+    //for(int i=0;i<NR_4;i=i+2){
+        //for(int j=0;j<NC_4;j=j+2){
+        //    max(inter_10[i][j],inter_10[i][j+1],inter_10[i+1][j],inter_10[i+1][j+1],out[i/2][j/2]);
+        //}
+    //}
 
 
 }
 
 #define IMG_ROWS 256
 #define IMG_COLS 256
-#define TILE_ROWS 64
-#define TILE_COLS 64
+#define TILE_ROWS 128
+#define TILE_COLS 128
 
 void split_into_tiles(ap_uint<8> A[IMG_ROWS][IMG_COLS],
                       ap_uint<8> tile0[TILE_ROWS][TILE_COLS],
@@ -380,20 +381,32 @@ void split_into_tiles(ap_uint<8> A[IMG_ROWS][IMG_COLS],
     }
 }
 
-void real_top(ap_uint<8> A[IMG_ROWS][IMG_COLS],ap_uint<8>out[14]){
+void real_top(ap_uint<8> A[IMG_ROWS][IMG_COLS],ap_uint<8>out[NR_3][NC_3]){
     #pragma HLS ALLOCATION function instances=convol limit=1
     ap_uint<8> tile0[TILE_ROWS][TILE_COLS];
     ap_uint<8> tile1[TILE_ROWS][TILE_COLS];
     ap_uint<8> tile2[TILE_ROWS][TILE_COLS];
     ap_uint<8> tile3[TILE_ROWS][TILE_COLS];
     split_into_tiles(A,tile0,tile1,tile2,tile3);
-    iint out0[NR_5][NC_5];
-    iint out1[NR_5][NC_5];
-    iint out2[NR_5][NC_5];
-    iint out3[NR_5][NC_5];
+    iint out0[NR_4][NC_4];
+    iint out1[NR_4][NC_4];
+    iint out2[NR_4][NC_4];
+    iint out3[NR_4][NC_4];
     convol(tile0,out0);
     convol(tile1,out1);
     convol(tile2,out2);
     convol(tile3,out3);
-
+    for (int i = 0; i < NR_4; i++) {
+        for (int j = 0; j < NC_4; j++) {
+        //#pragma HLS PIPELINE II=1
+            // Top-left output
+            out[i][j] = out0[i][j];
+            // Top-right output
+            out[i][j + NC_4] = out1[i][j];
+            // Bottom-left output
+            out[i + NR_4][j] = out2[i][j];
+            // Bottom-right output
+            out[i + NR_4][j + NC_4] = out3[i][j];
+        }
+    }
 }
