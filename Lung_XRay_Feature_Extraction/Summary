@@ -1,0 +1,34 @@
+Implementation Overview
+1. Input Image (cnn_input.ppm)
+
+A 256×256 grayscale lung X-ray image (converted from PPM).
+
+The image is read pixel-by-pixel into an FPGA-compatible ap_uint<8> array.
+
+2. Hardware Accelerator (real_top)
+
+The top-level HLS module that divides the input image into four 64×64 tiles.
+
+Each tile passes through a multi-layer convolutional pipeline (convol) consisting of:
+
+Sobel filters (X & Y): Edge detection
+
+ReLU activation: Removes negatives
+
+Max pooling: Reduces spatial dimensions
+
+Laplacian, Gaussian, DoG, and Sharpen filters: Feature enhancement and texture extraction
+
+After several stages of convolution + pooling, the final output feature map has reduced spatial size (16×16).
+
+3. Merging and Output
+
+The four processed tiles are merged back into a single output array.
+
+The final processed output is written back as cnn_output.ppm for visual verification.
+
+4. Feature Extraction
+
+The 16×16 feature map (256 features) is flattened using Python and stored as cnn_features.txt.
+
+These values represent spatially compressed but feature-rich data, ready for ML input.
