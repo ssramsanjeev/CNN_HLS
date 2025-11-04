@@ -1,0 +1,23 @@
+Image Sharpening – Early Stage of the CNN Accelerator
+
+The project began with implementing a simple image sharpening operation using a convolution kernel, without any pooling or activation layers.
+At this stage, the goal was to understand and accelerate basic convolution in hardware before moving toward a full CNN pipeline.
+
+Process:
+
+A single 3×3 sharpening kernel was applied to the input grayscale image.
+Example kernel: [ 0  1  0]
+                [-1  5 -1]
+                [ 0 -1  0]
+
+The convolution operation enhances edges and contrast — producing a “sharper” image.
+
+No ReLU or Pooling layers were used at this stage — the objective was purely to validate convolution logic, memory access patterns, and pixel throughput in HLS.
+
+Results:
+
+The “before” image shows the original input.
+
+The “after” image demonstrates the effect of the sharpening kernel.
+
+This step served as the foundation for later stages — where multiple convolution layers, pooling, and ReLU would form the full CNN accelerator.
